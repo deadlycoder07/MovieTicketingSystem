@@ -62,16 +62,13 @@ class TicketContoller implements Controller{
             for (let i = 0; i < cinema.seats.length; i++) {
                 Seat1Key = `lock:${id}:${i+1}`;
                 Seat2Key = `lock:${id}:${i+2}`;
-                isLocked1 = await this.redisClient.set(Seat1Key, 'locked', 'NX', 'EX', 10);
-                isLocked2 = await this.redisClient.set(Seat2Key, 'locked', 'NX', 'EX', 10);
                 if (!cinema.seats[i] && !cinema.seats[i + 1] && isLocked1 && isLocked2) {
-                consecutiveSeats.push(i + 1, i + 2);
-                cinema.seats[i] = true;
-                cinema.seats[i + 1] = true;
-                break;
-                }else{
-                  await this.redisClient.del(isLocked1);
-                  await this.redisClient.del(isLocked2);
+                    isLocked1 = await this.redisClient.set(Seat1Key, 'locked', 'NX', 'EX', 10);
+                    isLocked2 = await this.redisClient.set(Seat2Key, 'locked', 'NX', 'EX', 10);
+                    consecutiveSeats.push(i + 1, i + 2);
+                    cinema.seats[i] = true;
+                    cinema.seats[i + 1] = true;
+                    break;
                 }
             }
     
