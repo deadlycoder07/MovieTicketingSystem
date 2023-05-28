@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = __importDefault(require("./app"));
-const someContoller_1 = __importDefault(require("./controllers/someContoller"));
+const cinemaController_1 = __importDefault(require("./controllers/cinemaController"));
+const ticketController_1 = __importDefault(require("./controllers/ticketController"));
 const app = new app_1.default([
-    new someContoller_1.default()
+    new cinemaController_1.default(),
+    new ticketController_1.default()
 ], 3000);
 app.listen();

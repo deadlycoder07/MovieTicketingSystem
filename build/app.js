@@ -7,15 +7,17 @@ const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const error_middleware_1 = __importDefault(require("./middlewares/error.middleware"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const redis_1 = require("redis");
 require("dotenv/config");
 class App {
     constructor(controllers, port) {
         this.path = "/api/v1";
         this.app = (0, express_1.default)();
         this.port = port;
+        this.connectToRedis();
+        this.connectToTheDatabase();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
-        this.connectToTheDatabase();
     }
     initializeMiddlewares() {
         this.app.use(body_parser_1.default.json());
@@ -23,8 +25,15 @@ class App {
     }
     initializeControllers(controllers) {
         controllers.forEach((controller) => {
+            controller.setRedisClient(this.redisClient);
             this.app.use(this.path, controller.router);
         });
+    }
+    connectToRedis() {
+        const cacheOptions = {
+            url: process.env.redisURL,
+        };
+        this.redisClient = (0, redis_1.createClient)(Object.assign({}, cacheOptions));
     }
     connectToTheDatabase() {
         const { MONGO_USER, MONGO_PASSWORD, MONGO_PATH, } = process.env;

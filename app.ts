@@ -3,17 +3,20 @@ import bodyParser from "body-parser";
 import Controller  from "./controllers/controller.interface";
 import errorMiddleware from "./middlewares/error.middleware";
 import mongoose  from "mongoose";
+import {RedisClientType,createClient} from 'redis';
 import 'dotenv/config';
+import RedisClient from "@redis/client/dist/lib/client";
 class App{
     public path:string = "/api/v1"
     public app = express();
     public port:number;
-
+    public redisClient:any;
     constructor(controllers:Controller[],port:number){
         this.port = port;
+        this.connectToRedis();
+        this.connectToTheDatabase();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
-        this.connectToTheDatabase();
     }
     private initializeMiddlewares() {
         this.app.use(bodyParser.json());
@@ -21,7 +24,16 @@ class App{
       }
     private initializeControllers(controllers:Controller[]){
         controllers.forEach((controller:any)=>{
+            controller.setRedisClient(this.redisClient)
             this.app.use(this.path,controller.router);
+        });
+    }
+    private connectToRedis(){
+        const cacheOptions = {
+            url: process.env.redisURL,
+        };
+        this.redisClient = createClient({
+            ...cacheOptions
         });
     }
     private connectToTheDatabase() {
