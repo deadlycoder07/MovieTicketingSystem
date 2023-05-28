@@ -41,6 +41,7 @@ class TicketContoller implements Controller{
                 return;
             }
             cinema.seats[seatIndex] = true;
+            this.cinema.updateOne(cinema.id,cinema);
             // release the curr Seat
             await this.redisClient.del(Key); 
             res.json({ seat: seatNumber });
@@ -75,6 +76,7 @@ class TicketContoller implements Controller{
     
             if (consecutiveSeats.length === 2) {
                 await this.redisClient.del(Key); // Release the key
+                this.cinema.updateOne(cinema.id,cinema);
                 res.json({ seats: consecutiveSeats });
             } else {
                 await this.redisClient.del(Key); // Release the Key
