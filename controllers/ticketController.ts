@@ -55,31 +55,32 @@ class TicketContoller implements Controller{
                 res.status(404).json({ error: 'Cinema not found' });
                 return;
             }
+            let Seat1Key,Seat2Key,isLocked1,isLocked2;
     
-            // Acquire a lock for the cinema
-            const Key = `lock:${id}`;
-            const isLocked = await this.redisClient.set(Key, 'locked', 'NX', 'EX', 10);
-            if (!isLocked) {
-                res.status(400).json({ error: 'Cinema already being processed' });
-                return;
-            }
     
             const consecutiveSeats: number[] = [];
             for (let i = 0; i < cinema.seats.length; i++) {
-                if (!cinema.seats[i] && !cinema.seats[i + 1]) {
+                Seat1Key = `lock:${id}:${i+1}`;
+                Seat2Key = `lock:${id}:${i+2}`;
+                isLocked1 = await this.redisClient.set(Seat1Key, 'locked', 'NX', 'EX', 10);
+                isLocked2 = await this.redisClient.set(Seat2Key, 'locked', 'NX', 'EX', 10);
+                if (!cinema.seats[i] && !cinema.seats[i + 1] && isLocked1 && isLocked2) {
                 consecutiveSeats.push(i + 1, i + 2);
                 cinema.seats[i] = true;
                 cinema.seats[i + 1] = true;
                 break;
+                }else{
+                  await this.redisClient.del(isLocked1);
+                  await this.redisClient.del(isLocked2);
                 }
             }
     
             if (consecutiveSeats.length === 2) {
-                await this.redisClient.del(Key); // Release the key
+                await this.redisClient.del(isLocked1);
+                await this.redisClient.del(isLocked2); // Release the keys
                 this.cinema.updateOne(cinema.id,cinema);
                 res.json({ seats: consecutiveSeats });
             } else {
-                await this.redisClient.del(Key); // Release the Key
                 res.status(400).json({ error: 'No consecutive seats available' });
             }
         });
